@@ -181,7 +181,7 @@ public class HorizontalStepView extends LinearLayout implements HorizontalStepsV
                     mTextView = new TextView(getContext());
                     mTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, mTextSize);
                     mTextView.setText(mStepBeanList.get(i).getName());
-                    int spec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+                    int spec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
                     mTextView.measure(spec, spec);
                     // getMeasuredWidth
                     int measuredWidth = mTextView.getMeasuredWidth();

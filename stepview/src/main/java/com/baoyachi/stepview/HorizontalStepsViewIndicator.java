@@ -55,7 +55,7 @@ public class HorizontalStepsViewIndicator extends View
     private Path mPath;
 
     private OnDrawIndicatorListener mOnDrawListener;
-    private int screenWidth;//this screen width
+    private int mScreenWidth;//this screen width
 
     /**
      * 设置监听
@@ -135,18 +135,49 @@ public class HorizontalStepsViewIndicator extends View
     @Override
     protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
     {
-        int width = defaultStepIndicatorNum * 2;
-        if(MeasureSpec.UNSPECIFIED != MeasureSpec.getMode(widthMeasureSpec))
-        {
-            screenWidth = MeasureSpec.getSize(widthMeasureSpec);
+        // http://stackoverflow.com/a/12267248/2276198
+
+        //Minimum width and height if not set
+        int desiredWidth = (int) (mStepNum * mCircleRadius * 2 - (mStepNum - 1) * mLinePadding);
+        int desiredHeight = defaultStepIndicatorNum;
+
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+
+        int width;
+        int height;
+
+        //Measure Width
+        if (widthMode == MeasureSpec.EXACTLY) {
+            //Must be this size
+            width = widthSize;
+        } else if (widthMode == MeasureSpec.AT_MOST) {
+            //Can't be bigger than...
+            width = Math.min(desiredWidth, widthSize);
+        } else {
+            //Be whatever you want
+            width = desiredWidth;
         }
-        int height = defaultStepIndicatorNum;
-        if(MeasureSpec.UNSPECIFIED != MeasureSpec.getMode(heightMeasureSpec))
-        {
-            height = Math.min(height, MeasureSpec.getSize(heightMeasureSpec));
+
+        //Measure Height
+        if (heightMode == MeasureSpec.EXACTLY) {
+            //Must be this size
+            height = heightSize;
+        } else if (heightMode == MeasureSpec.AT_MOST) {
+            //Can't be bigger than...
+            height = Math.min(desiredHeight, heightSize);
+        } else {
+            //Be whatever you want
+            height = desiredHeight;
         }
-        width = (int) (mStepNum * mCircleRadius * 2 - (mStepNum - 1) * mLinePadding);
+
+        mScreenWidth = width;
+
         setMeasuredDimension(width, height);
+
+
     }
 
     @Override
@@ -161,12 +192,17 @@ public class HorizontalStepsViewIndicator extends View
         mRightY = mCenterY + mCompletedLineHeight / 2;
 
         mCircleCenterPointPositionList.clear();
+
+        float distanceBetweenEach = (mScreenWidth/(mStepNum + 1));
+
         for(int i = 0; i < mStepNum; i++)
         {
             //先计算全部最左边的padding值（getWidth()-（圆形直径+两圆之间距离）*2）
-            float paddingLeft = (screenWidth - mStepNum * mCircleRadius * 2 - (mStepNum - 1) * mLinePadding) / 2;
+            //float paddingLeft = (mScreenWidth - mStepNum * mCircleRadius * 2 - (mStepNum - 1) * mLinePadding) / 2;
+//            float paddingLeft = (mScreenWidth/ - mStepNum * mCircleRadius * 2 - (mStepNum - 1) * mLinePadding) / 2;
+//            float paddingLeft = 10;
             //add to list
-            mCircleCenterPointPositionList.add(paddingLeft + mCircleRadius + i * mCircleRadius * 2 + i * mLinePadding);
+            mCircleCenterPointPositionList.add(distanceBetweenEach * (i + 1));
         }
 
         /**
@@ -197,10 +233,10 @@ public class HorizontalStepsViewIndicator extends View
             //后一个ComplectedXPosition
             final float afterComplectedXPosition = mCircleCenterPointPositionList.get(i + 1);
 
-            if(i <= mComplectingPosition&&mStepBeanList.get(0).getState()!=StepBean.STEP_UNDO)//判断在完成之前的所有点
+            if(i <= mComplectingPosition && mStepBeanList.get(0).getState()!= StepBean.STEP_UNDO)//判断在完成之前的所有点
             {
                 //判断在完成之前的所有点，画完成的线，这里是矩形,很细的矩形，类似线，为了做区分，好看些
-                canvas.drawRect(preComplectedXPosition + mCircleRadius - 10, mLeftY, afterComplectedXPosition - mCircleRadius + 10, mRightY, mCompletedPaint);
+                canvas.drawRect(preComplectedXPosition + mCircleRadius, mLeftY, afterComplectedXPosition - mCircleRadius, mRightY, mCompletedPaint);
             } else
             {
                 mPath.moveTo(preComplectedXPosition + mCircleRadius, mCenterY);
@@ -219,17 +255,17 @@ public class HorizontalStepsViewIndicator extends View
 
             StepBean stepsBean = mStepBeanList.get(i);
 
-            if(stepsBean.getState()==StepBean.STEP_UNDO)
+            if(stepsBean.getState()== StepBean.STEP_UNDO)
             {
                 mDefaultIcon.setBounds(rect);
                 mDefaultIcon.draw(canvas);
-            }else if(stepsBean.getState()==StepBean.STEP_CURRENT)
+            }else if(stepsBean.getState()== StepBean.STEP_CURRENT)
             {
                 mCompletedPaint.setColor(Color.WHITE);
                 canvas.drawCircle(currentComplectedXPosition, mCenterY, mCircleRadius * 1.1f, mCompletedPaint);
                 mAttentionIcon.setBounds(rect);
                 mAttentionIcon.draw(canvas);
-            }else if(stepsBean.getState()==StepBean.STEP_COMPLETED)
+            }else if(stepsBean.getState()== StepBean.STEP_COMPLETED)
             {
                 mCompleteIcon.setBounds(rect);
                 mCompleteIcon.draw(canvas);
@@ -264,7 +300,7 @@ public class HorizontalStepsViewIndicator extends View
             {
                 StepBean stepsBean = mStepBeanList.get(i);
                 {
-                    if(stepsBean.getState()==StepBean.STEP_COMPLETED)
+                    if(stepsBean.getState()== StepBean.STEP_COMPLETED)
                     {
                         mComplectingPosition = i;
                     }
